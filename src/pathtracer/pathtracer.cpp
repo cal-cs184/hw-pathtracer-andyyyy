@@ -3,7 +3,7 @@
 #include "scene/light.h"
 #include "scene/sphere.h"
 #include "scene/triangle.h"
-
+#include "vector3D.h"
 
 using namespace CGL::SceneObjects;
 
@@ -50,8 +50,10 @@ PathTracer::estimate_direct_lighting_hemisphere(const Ray &r,
   // Estimate the lighting from this intersection coming directly from a light.
   // For this function, sample uniformly in a hemisphere.
 
-  // Note: When comparing Cornel Box (CBxxx.dae) results to importance sampling, you may find the "glow" around the light source is gone.
-  // This is totally fine: the area lights in importance sampling has directionality, however in hemisphere sampling we don't model this behaviour.
+  // Note: When comparing Cornel Box (CBxxx.dae) results to importance sampling,
+  // you may find the "glow" around the light source is gone. This is totally
+  // fine: the area lights in importance sampling has directionality, however in
+  // hemisphere sampling we don't model this behaviour.
 
   // make a coordinate system for a hit point
   // with N aligned with the Z direction.
@@ -72,10 +74,10 @@ PathTracer::estimate_direct_lighting_hemisphere(const Ray &r,
 
   // TODO (Part 3): Write your sampling loop here
   // TODO BEFORE YOU BEGIN
-  // UPDATE `est_radiance_global_illumination` to return direct lighting instead of normal shading 
+  // UPDATE `est_radiance_global_illumination` to return direct lighting instead
+  // of normal shading
 
   return Vector3D(1.0);
-
 }
 
 Vector3D
@@ -97,9 +99,7 @@ PathTracer::estimate_direct_lighting_importance(const Ray &r,
   const Vector3D w_out = w2o * (-r.d);
   Vector3D L_out;
 
-
   return Vector3D(1.0);
-
 }
 
 Vector3D PathTracer::zero_bounce_radiance(const Ray &r,
@@ -107,10 +107,7 @@ Vector3D PathTracer::zero_bounce_radiance(const Ray &r,
   // TODO: Part 3, Task 2
   // Returns the light that results from no bounces of light
 
-
   return Vector3D(1.0);
-
-
 }
 
 Vector3D PathTracer::one_bounce_radiance(const Ray &r,
@@ -119,10 +116,7 @@ Vector3D PathTracer::one_bounce_radiance(const Ray &r,
   // Returns either the direct illumination by hemisphere or importance sampling
   // depending on `direct_hemisphere_sample`
 
-
   return Vector3D(1.0);
-
-
 }
 
 Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
@@ -137,9 +131,8 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
   Vector3D L_out(0, 0, 0);
 
   // TODO: Part 4, Task 2
-  // Returns the one bounce radiance + radiance from extra bounces at this point.
-  // Should be called recursively to simulate extra bounces.
-
+  // Returns the one bounce radiance + radiance from extra bounces at this
+  // point. Should be called recursively to simulate extra bounces.
 
   return L_out;
 }
@@ -157,10 +150,9 @@ Vector3D PathTracer::est_radiance_global_illumination(const Ray &r) {
   // been implemented.
   //
   // REMOVE THIS LINE when you are ready to begin Part 3.
-  
+
   if (!bvh->intersect(r, &isect))
     return envLight ? envLight->sample_dir(r) : L_out;
-
 
   L_out = (isect.t == INF_D) ? debug_shading(r.d) : normal_shading(isect.n);
 
@@ -178,17 +170,28 @@ void PathTracer::raytrace_pixel(size_t x, size_t y) {
   // through the scene. Return the average Vector3D.
   // You should call est_radiance_global_illumination in this function.
 
+  double normX = static_cast<double>(x) / sampleBuffer.w;
+  double normY = static_cast<double>(y) / sampleBuffer.h;
+
+  int num_samples = ns_aa;
+  Vector3D radiance;
+  for (int i = 0; i < num_samples; ++i) {
+    Ray ray = camera->generate_ray(normX, normY);
+    radiance += est_radiance_global_illumination(ray);
+  }
+
+  radiance /= num_samples;
+  sampleBuffer.update_pixel(radiance, x, y);
+  sampleCountBuffer[x + y * sampleBuffer.w] = num_samples;
+
   // TODO (Part 5):
   // Modify your implementation to include adaptive sampling.
   // Use the command line parameters "samplesPerBatch" and "maxTolerance"
-  int num_samples = ns_aa;          // total samples to evaluate
-  Vector2D origin = Vector2D(x, y); // bottom left corner of the pixel
+  // int num_samples = ns_aa;          // total samples to evaluate
+  // Vector2D origin = Vector2D(x, y); // bottom left corner of the pixel
 
-
-  sampleBuffer.update_pixel(Vector3D(0.2, 1.0, 0.8), x, y);
-  sampleCountBuffer[x + y * sampleBuffer.w] = num_samples;
-
-
+  // sampleBuffer.update_pixel(Vector3D(0.2, 1.0, 0.8), x, y);
+  // sampleCountBuffer[x + y * sampleBuffer.w] = num_samples;
 }
 
 void PathTracer::autofocus(Vector2D loc) {

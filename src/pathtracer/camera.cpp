@@ -1,8 +1,8 @@
 #include "camera.h"
 
+#include <fstream>
 #include <iostream>
 #include <sstream>
-#include <fstream>
 
 #include "CGL/misc.h"
 #include "CGL/vector2D.h"
@@ -10,9 +10,9 @@
 
 using std::cout;
 using std::endl;
+using std::ifstream;
 using std::max;
 using std::min;
-using std::ifstream;
 using std::ofstream;
 
 namespace CGL {
@@ -26,7 +26,7 @@ using Collada::CameraInfo;
  *       of view is expanded along whichever dimension is too narrow.
  * NOTE2: info.hFov and info.vFov are expected to be in DEGREES.
  */
-void Camera::configure(const CameraInfo& info, size_t screenW, size_t screenH) {
+void Camera::configure(const CameraInfo &info, size_t screenW, size_t screenH) {
   this->screenW = screenW;
   this->screenH = screenH;
   nClip = info.nClip;
@@ -43,12 +43,12 @@ void Camera::configure(const CameraInfo& info, size_t screenW, size_t screenH) {
     // vFov is too small
     vFov = 2 * degrees(atan(tan(radians(hFov) / 2) / ar));
   }
-  screenDist = ((double) screenH) / (2.0 * tan(radians(vFov) / 2));
+  screenDist = ((double)screenH) / (2.0 * tan(radians(vFov) / 2));
 }
 
 /**
- * This function places the camera at the target position and sets the arguments.
- * Phi and theta are in RADIANS.
+ * This function places the camera at the target position and sets the
+ * arguments. Phi and theta are in RADIANS.
  */
 void Camera::place(const Vector3D targetPos, const double phi,
                    const double theta, const double r, const double minR,
@@ -67,7 +67,7 @@ void Camera::place(const Vector3D targetPos, const double phi,
 /**
  * This function copies the camera placement state.
  */
-void Camera::copy_placement(const Camera& other) {
+void Camera::copy_placement(const Camera &other) {
   pos = other.pos;
   targetPos = other.targetPos;
   phi = other.phi;
@@ -84,8 +84,8 @@ void Camera::set_screen_size(const size_t screenW, const size_t screenH) {
   this->screenW = screenW;
   this->screenH = screenH;
   ar = 1.0 * screenW / screenH;
-  hFov = 2 * degrees(atan(((double) screenW) / (2 * screenDist)));
-  vFov = 2 * degrees(atan(((double) screenH) / (2 * screenDist)));
+  hFov = 2 * degrees(atan(((double)screenW) / (2 * screenDist)));
+  vFov = 2 * degrees(atan(((double)screenH) / (2 * screenDist)));
 }
 
 /**
@@ -94,7 +94,7 @@ void Camera::set_screen_size(const size_t screenW, const size_t screenH) {
 void Camera::move_by(const double dx, const double dy, const double d) {
   const double scaleFactor = d / screenDist;
   const Vector3D displacement =
-    c2w[0] * (dx * scaleFactor) + c2w[1] * (dy * scaleFactor);
+      c2w[0] * (dx * scaleFactor) + c2w[1] * (dy * scaleFactor);
   pos += displacement;
   targetPos += displacement;
 }
@@ -112,13 +112,14 @@ void Camera::move_forward(const double dist) {
  * This function rotates the camera position
  */
 void Camera::rotate_by(const double dPhi, const double dTheta) {
-  phi = clamp(phi + dPhi, 0.0, (double) PI);
+  phi = clamp(phi + dPhi, 0.0, (double)PI);
   theta += dTheta;
   compute_position();
 }
 
 /**
- * This function computes the camera position, basis vectors, and the view matrix
+ * This function computes the camera position, basis vectors, and the view
+ * matrix
  */
 void Camera::compute_position() {
   double sinPhi = sin(phi);
@@ -126,8 +127,7 @@ void Camera::compute_position() {
     phi += EPS_F;
     sinPhi = sin(phi);
   }
-  const Vector3D dirToCamera(r * sinPhi * sin(theta),
-                             r * cos(phi),
+  const Vector3D dirToCamera(r * sinPhi * sin(theta), r * cos(phi),
                              r * sinPhi * cos(theta));
   pos = targetPos + dirToCamera;
   Vector3D upVec(0, sinPhi > 0 ? 1 : -1, 0);
@@ -138,11 +138,11 @@ void Camera::compute_position() {
 
   c2w[0] = screenXDir;
   c2w[1] = screenYDir;
-  c2w[2] = dirToCamera.unit();   // camera's view direction is the
-                                 // opposite of of dirToCamera, so
-                                 // directly using dirToCamera as
-                                 // column 2 of the matrix takes [0 0 -1]
-                                 // to the world space view direction
+  c2w[2] = dirToCamera.unit(); // camera's view direction is the
+                               // opposite of of dirToCamera, so
+                               // directly using dirToCamera as
+                               // column 2 of the matrix takes [0 0 -1]
+                               // to the world space view direction
 }
 
 /**
@@ -150,7 +150,8 @@ void Camera::compute_position() {
  */
 void Camera::dump_settings(string filename) {
   ofstream file(filename);
-  file << hFov << " " << vFov << " " << ar << " " << nClip << " " << fClip << endl;
+  file << hFov << " " << vFov << " " << ar << " " << nClip << " " << fClip
+       << endl;
   for (int i = 0; i < 3; ++i)
     file << pos[i] << " ";
   for (int i = 0; i < 3; ++i)
@@ -158,7 +159,7 @@ void Camera::dump_settings(string filename) {
   file << endl;
   file << phi << " " << theta << " " << r << " " << minR << " " << maxR << endl;
   for (int i = 0; i < 9; ++i)
-    file << c2w(i/3, i%3) << " ";
+    file << c2w(i / 3, i % 3) << " ";
   file << endl;
   file << screenW << " " << screenH << " " << screenDist << endl;
   file << focalDistance << " " << lensRadius << endl;
@@ -178,14 +179,15 @@ void Camera::load_settings(string filename) {
     file >> targetPos[i];
   file >> phi >> theta >> r >> minR >> maxR;
   for (int i = 0; i < 9; ++i)
-    file >> c2w(i/3, i%3);
+    file >> c2w(i / 3, i % 3);
   file >> screenW >> screenH >> screenDist;
   file >> focalDistance >> lensRadius;
   cout << "[Camera] Loaded settings from " << filename << endl;
 }
 
 /**
- * This function generates a ray from camera perspective, passing through camera / sensor plane (x,y)
+ * This function generates a ray from camera perspective, passing through camera
+ * / sensor plane (x,y)
  */
 Ray Camera::generate_ray(double x, double y) const {
 
@@ -193,11 +195,29 @@ Ray Camera::generate_ray(double x, double y) const {
   // compute position of the input sensor sample coordinate on the
   // canonical sensor plane one unit away from the pinhole.
   // Note: hFov and vFov are in degrees.
-  //
 
+  double hFovRad = radians(hFov);
+  double vFovRad = radians(vFov);
 
-  return Ray(pos, Vector3D(0, 0, -1));
+  double halfWidth = tan(0.5 * hFovRad);
+  double halfHeight = tan(0.5 * vFovRad);
 
+  // (1 - x) * (-halfWidth) + x * (halfWidth)
+  double sensorX = -halfWidth + (x * 2 * halfWidth);
+  double sensorY = -halfHeight + (y * 2 * halfHeight);
+
+  Vector3D direction(sensorX, sensorY, -1);
+  direction.unit();
+
+  Vector3D origin = pos;
+  Vector3D worldDirection = c2w * direction;
+  worldDirection.unit();
+
+  Ray ray(origin, worldDirection);
+  ray.min_t = nClip;
+  ray.max_t = fClip;
+
+  return ray;
 }
 
 } // namespace CGL
